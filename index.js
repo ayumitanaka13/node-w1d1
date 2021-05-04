@@ -1,74 +1,60 @@
-// const Person = require("./person");
-
-// const person1 = new Person("Ami", 10);
-
-// person1.greeting();
-
-const http = require("http");
+const express = require("express");
 const path = require("path");
-const fs = require("fs");
+const app = express();
 
-const server = http.createServer((req, res) => {
-  //   console.log(req);
-  //   if (req.url === "/") {
-  //     res.writeHead(200, { "Content-Type": "text.html" });
-  //     res.write("<html>");
-  //     res.write("<head><title>Home Page</title></head>");
-  //     res.write("<body>");
-  //     res.end("<h1>Hola</h1>");
-  //     res.write("</body>");
-  //     res.write("</html>");
-  //     res.end();
-  //   }
+const shopRouters = require("./routes/shop");
 
-  // build a file path
-  let filePath = path.join(
-    __dirname,
-    "public",
-    req.url === "/" ? "index.html" : req.url
-  );
-  // extension of the file
-  let extname = path.extname(filePath);
-  // initial content type
-  let contentType = "text/html";
-  // check for ext name and set the proper content type
-  switch (extname) {
-    case ".js":
-      contentType = "text/javascript";
-      break;
-    case ".css":
-      contentType = "text/css";
-      break;
-    case ".json":
-      contentType = "application/json";
-      break;
-  }
-  // check if the contentType is text/html but .html file extension
-  if (contentType === "text/html" && extname === "") filePath += ".html";
-  // read file
-  fs.readFile(filePath, (err, content) => {
-    if (err) {
-      if (err.code === "ENOENT") {
-        // Error NO ENTity
-        // console.log(err);
-        fs.readFile(
-          path.join(__dirname, "public", "404.html"),
-          (err, content) => {
-            res.writeHead(404, { "Content-Type": "text.html" });
-            res.end(content, "utf8");
-          }
-        );
-      } else {
-        res.writeHead(500);
-        res.end(`Server error: ${err.code}`);
-      }
-    } else {
-      res.writeHead(200, { "Content-Type": contentType });
-      res.end(content, "utf8");
-    }
-  });
+//middlewares
+// app.use((req, res, next) => {
+//   console.log("In the first middleware");
+//   next(); //arows the request to continue to the next middleware
+// });
+
+// app.use("/hello", (req, res, next) => {
+//   console.log("in the second midddleware");
+//   res.send("<h1>Hello from the Express.js</h1>");
+// });
+
+// app.get("/", (req, res) => {
+//   //   res.send("<h1>Hello Express</h1>");
+//   res.sendFile(path.join(__dirname, "public", "index.html"));
+// });
+
+//to parse incoming form data
+app.use(express.urlencoded({ extended: false }));
+
+app.use("/add-products", (req, res) => {
+  res.send(`
+    <form action="/product" method="POST">
+        <input type="text" name="title"/>
+        <button type="submit">SEND</button>
+    </form>
+    `);
 });
 
-const PORT = process.env.PORT || 5000;
+app.use("/product", (req, res) => {
+  console.log(req.body);
+  res.redirect("/");
+});
 
-server.listen(PORT, () => console.log(`Server is running on PORT ${PORT}`));
+// app.get("/", (req, res) => {
+//   //   res.send("<h1>Hello Express</h1>");
+//   res.sendFile(path.join(__dirname, "public", "index.html"));
+// });
+
+//from route
+app.use(shopRouters);
+
+//catch-all-middleware ---404/500
+app.use((req, res, next) => {
+  res.status(404);
+  res.end("<h1>404 Error</h1>");
+});
+
+// app.use((err, req, res, next) => {
+//   res.status(500);
+//   res.end("<h1>500 Error<h1>");
+// });
+
+const PORT = process.env.PORT || 5000;
+app.listen(PORT, () => console.log(`Server started at port ${PORT}`));
